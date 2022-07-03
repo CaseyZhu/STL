@@ -1,0 +1,244 @@
+// Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+{
+  name: "entropy_src"
+  import_testplans: ["hw/dv/tools/dvsim/testplans/csr_testplan.hjson",
+                     "hw/dv/tools/dvsim/testplans/intr_test_testplan.hjson",
+                     "hw/dv/tools/dvsim/testplans/alert_test_testplan.hjson",
+                     "hw/dv/tools/dvsim/testplans/tl_device_access_types_testplan.hjson",
+                     "hw/dv/tools/dvsim/testplans/stress_all_with_reset_testplan.hjson",
+                     "entropy_src_sec_cm_testplan.hjson"]
+  testpoints: [
+    {
+      name: smoke
+      desc: '''
+            Enable entropy_src, wait for interrupt, verify entropy.
+            '''
+      milestone: V1
+      tests: ["entropy_src_smoke"]
+    }
+    {
+      name: firmware
+      desc: '''
+            Verify ability to access entropy register based on value of efuse input
+            Verify sw_regupd, me_regwen bits enables/disables write access to control registers
+            Verify control registers are read-only while DUT is enabled
+            Verify registers at End-Of-Test
+            '''
+      milestone: V2
+      tests: ["entropy_src_smoke", "entropy_src_fw_ov", "entropy_src_rng"]
+    }
+    {
+      name: firmware_mode
+      desc: '''
+            Verify health_checks aren't active
+            Verify bypass active
+            Verify read FIFO
+            - Random FIFO depths
+            '''
+      milestone: V2
+      tests: ["entropy_src_fw_ov"]
+    }
+    {
+      name: rng_mode
+      desc: '''
+            Verify rng entropy
+            - Random FIFO depths
+            - Random rates
+            - Verify single_bit_mode for all bit_selector values
+            Verify FIPS bits match predicted
+            '''
+      milestone: V2
+      tests: ["entropy_src_rng"]
+    }
+    {
+      name: health_checks
+      desc: '''
+            Verify AdaptProp, RepCnt, RepCntSym, Bucket, Markov health check results
+            match predicted.
+            - Generate passing and failing raw entropy streams
+            - Random window sizes
+            - Default and random hi/lo bypass/fips thresholds
+            - Enables/fail counts/clears
+            - Verify hi/lo bypass/fips watermarks
+            - Verify External health check behaves as predicted
+            - Verify outputs match internal reg values/entropy bus
+            - Pulse inputs and verify captured
+            - Verify health testing stops when no demand for entropy
+            '''
+      milestone: V2
+      tests: ["entropy_src_rng"]
+    }
+    {
+      name: conditioning
+      desc: '''
+            Verify genbits seeds in bypass mode as predicted.
+            Verify genbits seeds after shah3 conditioning as predicted.
+            '''
+      milestone: V2
+      tests: ["entropy_src_rng"]
+    }
+    {
+      name: interrupts
+      desc: '''
+            Verify es_entropy_valid interrupt asserts as predicted.
+            Verify es_health_test_failed interrupt asserts as predicted.
+            Verify es_fifo_err interrupt asserts as predicted.
+            '''
+      milestone: V2
+      tests: ["entropy_src_intr"]
+    }
+    {
+      name: alerts
+      desc: '''
+            Verify es_alert_count_met asserts as expected.
+            '''
+      milestone: V2
+      tests: ["entropy_src_alert"]
+    }
+    {
+      name: stress_all
+      desc: '''
+            Combine the individual test points while injecting TL errors and
+            running CSR tests in parallel.
+            '''
+      milestone: V2
+      tests: ["entropy_src_stress_all"]
+    }
+    {
+      name: fifo_errs
+      desc: '''
+            Verify they never occur with asserts
+            '''
+      milestone: V2
+      tests: ["entropy_src_err"]
+    }
+  ]
+  covergroups: [
+    {
+      name: err_test_cg
+      desc: '''
+            Covers that all health test failures, fatal errors, all counter errors and
+            all error codes of entropy_src have been tested.
+            Individual config settings that will be covered include:
+            - which_ht_fail (0 to 3), 4 possible health test fails, repcnt, adaptp, bucket and
+              markov test fails
+            - which_ht (0 to 1), adaptp and markov health tests have low and high tests
+            - which_fatal_err (0 to 5), 6 fatal errors, esrng, observe, esfinal fifo errors,
+              main state machine, ack state machine errors, and counter error
+            - which_fifo_err (0 to 2), fifo has write, read and state errors
+            - which_fifo (0 to 2), esrng, observe and esfinal fifos
+            - which_cntr (0 to 5), 6 possible counter errors, window counter, repcnt ht counter,
+              repcnts ht counter, adaptive proportion ht counter, bucket ht counter and
+              markov ht counter
+            - which_err_code (0 to 17), ERR_CODE has 9 fields, plus 9 ERR_CODE_TEST bits test
+            - which_invalid_mubi (0 to 8), 9 possible invalid mubi value fields
+            - which_cntr_replicate (0 to RNG_BUS_WIDTH-1), reptcnt, adaptp, markov health tests
+              have RNG_BUS_WIDTH copies of counters
+            - which_bin (0 to 2<sup>RNG_BUS_WIDTH-1</sup>), bucket health test has 2<sup>RNG_BUS_WIDTH</sup> copies
+              of counters
+            '''
+    }
+    {
+      name: seed_output_hw_cg
+      desc: '''
+            Covers that data output is observed at the CSRNG HW interface for
+            all possible modes of operation, including:
+            - CONF.FIPS_ENABLE (True and False)
+            - CONF.ENTROPY_DATA_REG_ENABLE (True and False)
+            - CONF.THRESHOLD_SCOPE (True and False)
+            - CONF.RNG_BIT_ENABLE (True and False)
+            - CONF.RNG_BIT_SEL (0 to 3)
+            - ENTROPY_CONTROL.ES_TYPE (True and False)
+            - FW_OV_MODE (True or False)
+            - FW_OV_ENTROPY_INSERT (True or False)
+            In addition to the above, the following settings are illegal when sampling on
+            this covergroup, and merit the creation of illegal_bins
+            - ENTROPY_CONTROL.ES_ROUTE = True
+
+            Since the scoreboard permits data to be dropped or rejected by the entropy source we
+            must explicitly confirm that the data is observed at the outputs for all possible
+            configurations.
+            '''
+    }
+    {
+      name: seed_output_entropy_data_cg
+      desc: '''
+            Covers that data output is observed at the entropy_data CSR interfaces for
+            all possible modes of operation, including:
+            - CONF.FIPS_ENABLE (True and False)
+            - CONF.THRESHOLD_SCOPE (True and False)
+            - CONF.RNG_BIT_ENABLE (True and False)
+            - CONF.RNG_BIT_SEL (0 to 3)
+            - ENTROPY_CONTROL.ES_TYPE (True and False)
+            - FW_OV_MODE (True or False)
+            - FW_OV_ENTROPY_INSERT (True or False)
+            In addition to the above, the following settings are illegal when sampling on the
+            this covergroup, and merit the creation of illegal_bins
+            - ENTROPY_CONTROL.ES_ROUTE = False
+            - CONF.ENTROPY_DATA_REG_ENABLE = False
+
+            Since the scoreboard permits data to be dropped or rejected by the entropy source we
+            must explicitly confirm that the data is observed at the outputs for all possible
+            configurations.
+            '''
+    }
+    {
+      name: fw_ov_output_cg
+      desc: '''
+            Covers that data output is observed at the fw_ov_rd_data CSE interface for
+            all possible modes of operation, including:
+            - CONF.FIPS_ENABLE (True and False)
+            - CONF.ENTROPY_DATA_REG_ENABLE (True and False)
+            - CONF.THRESHOLD_SCOPE (True and False)
+            - CONF.RNG_BIT_ENABLE (True and False)
+            - CONF.RNG_BIT_SEL (0 to 3)
+            - ENTROPY_CONTROL.ES_ROUTE (True and False), If True, data must be observed at the
+              ENTROPY_DATA CSR.  If False, data must be observed at the CSRNG port.
+            - ENTROPY_CONTROL.ES_TYPE (True and False)
+            - FW_OV_MODE (True or False)
+            - FW_OV_ENTROPY_INSERT (True or False)
+            Since the scoreboard permits data to be dropped by the entropy source we
+            must explicitly confirm that the data is observed at this output for all possible
+            configurations.
+            '''
+    }
+    {
+      name: sw_update_cg
+      desc: '''
+            Covers that the TB has attempted to update DUT configurations while the module is
+            enabled, to ensure that the sw_regupd CSR is working
+            '''
+    }
+    {
+      name: ht_threshold_cg
+      desc: '''
+            Covers a range of values for all health test thresholds.  For each test we need:
+            - Test: ADAPTB, BUCKET, MARKOV, REPCNT, and REPTCNTS.
+              No cross between tests. EXT HT not used or covered for ES
+            - Mode: Bypass or FIPS
+            - window_size: {384, 512, 1024, 2048, 4096, plus other non-powers of two}
+            - Range buckets:
+               - For the ADAPTP, BUCKET and MARKOV test, the configuration sets the thresholds
+                 in units the likelihood of HT failure (i.e., sigma values):
+                 covers minimum, maximum, 0-2 sigma, 1-2 sigma, 2-4 sigma, 4-6 sigma, &gt; 6 sigma
+               - For REPCNT and REPCNTS tests covers buckets of 0-32, 32-64, 64-96, &gt; 96
+            - Result: HT Pass and Failure
+            '''
+    }
+    {
+      name: alert_cnt_cg
+      desc: '''
+            Covers a range of values (1 to 16, plus &gt; 16) for ALERT_THRESHOLD
+            '''
+    }
+    {
+      name: observe_fifo_thresh_cg
+      desc: '''
+            Covers a range of values (1-64) for OBSERVE_FIFO_THRESH. Interrupts
+            and data must be observed for all values.
+            '''
+    }
+  ]
+}

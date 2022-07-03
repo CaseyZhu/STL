@@ -6,6 +6,13 @@ Use these primitives to build your modules will save lot's of design and verfiy 
 
 # Content
 
+* LowRISC: is the ips from opentitan, prim and prim_genric is the basic primitives.
+These primivtives include: fifo, arbiter, crc, ecc, useful Macro etc.  
+
+* Common: is the ip write by myself include: sort, compare tree, 
+ pipe-line control, swtichs, interface, useful Macro etc.
+
+
 # Basic Coding Guide
 
 This repository contains style guides curated by lowRISC for use in our
