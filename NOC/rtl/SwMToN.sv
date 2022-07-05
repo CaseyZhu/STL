@@ -76,8 +76,7 @@ end:TRANSTAGS
 
 for (genvar i = 0; i < OUT_N; i=i+1) begin:SWNTO1
    
-   SwNTo1 #(.IN_N                       (IN_N),
-            .IN_W                       (IN_W),
+   SwNTo1 #(.IN_N                       (IN_N), 
             .TAG_W                      (TAG_W),
             .ARB_EN                     (ARB_EN))
        u_SwNTo1 (            

@@ -29,25 +29,25 @@ input                   rst_n,
 axi4_stream_if.Slave    noc_req_i[DIM_N-1:0],
 axi4_stream_if.Master   noc_req_o[DIM_N-1:0]
 );
-localparam IF_TBW = $bits(axi_if_i.tdata    ) +
-                    $bits(axi_if_i.tstrb    ) +
-                    $bits(axi_if_i.tkeep    ) +
-                    $bits(axi_if_i.tlast    ) +
-                    $bits(axi_if_i.tid      ) +
-                    $bits(axi_if_i.tdest    ) +
-                    $bits(axi_if_i.tuser    );
+localparam IF_TBW = $bits(noc_req_i[0].tdata    ) +
+                    $bits(noc_req_i[0].tstrb    ) +
+                    $bits(noc_req_i[0].tkeep    ) +
+                    $bits(noc_req_i[0].tlast    ) +
+                    $bits(noc_req_i[0].tid      ) +
+                    $bits(noc_req_i[0].tdest    ) +
+                    $bits(noc_req_i[0].tuser    );
 axi4_stream_if #(
-  .TDATA_W ( $bits(noc_req_i.tdata    )  ),
-  .TID_W   ( $bits(noc_req_i.tid      )  ),
-  .TDEST_W ( $bits(noc_req_i.tdest    )  ),
-  .TUSER_W ( $bits(noc_req_i.tuser    )  )
+  .TDATA_W ( $bits(noc_req_i[0].tdata    )  ),
+  .TID_W   ( $bits(noc_req_i[0].tid      )  ),
+  .TDEST_W ( $bits(noc_req_i[0].tdest    )  ),
+  .TUSER_W ( $bits(noc_req_i[0].tuser    )  )
 ) noc_req_pipe_i[DIM_N-1:0]();
 
 axi4_stream_if #(
-  .TDATA_W ( $bits(noc_req_i.tdata    )  ),
-  .TID_W   ( $bits(noc_req_i.tid      )  ),
-  .TDEST_W ( $bits(noc_req_i.tdest    )  ),
-  .TUSER_W ( $bits(noc_req_i.tuser    )  )
+  .TDATA_W ( $bits(noc_req_i[0].tdata    )  ),
+  .TID_W   ( $bits(noc_req_i[0].tid      )  ),
+  .TDEST_W ( $bits(noc_req_i[0].tdest    )  ),
+  .TUSER_W ( $bits(noc_req_i[0].tuser    )  )
 ) noc_req_pipe_o[DIM_N-1:0]();
 
 logic[DIM_N-1:0][$clog2(DIM_N)-1:0] port_swb; //Rout compute: which port to go

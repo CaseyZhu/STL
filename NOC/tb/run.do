@@ -38,7 +38,11 @@ vmap    work    work
 
 #这里要添加你的RTL文件、TB文件、IP核的.文件、IP核需要用到的库文件
 
-vlog  -64  -work    work  +incdir+../../rtl -sv  -f ../../common.f ./tb.sv -l compile.log
+vlog  -64  -work    work  +incdir+../../Common/rtl -sv \
+-f ../../Common/common.f \
+-f ../../Interface/interface.f \
+-f ../../NOC/noc.f \
+./tb.sv -l compile.log
 
 #Start-up simulation example :
 
