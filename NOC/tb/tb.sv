@@ -106,8 +106,8 @@ for (genvar i = 0;i<NODE_N ; i++) begin:LOOPBACK
         end else if (~noc_req_i[i].tvalid ) begin
             noc_req_i[i].tvalid <= 1 &&(noc_req_i[i].tdata < 32);//({$random}%2) && (i==0);
             noc_req_i[i].tdata  <= noc_req_i[i].tdata + 1;
-            noc_req_i[i].tdest  <= i;
-            noc_req_i[i].tuser  <= noc_req_i[i].tuser + 1;
+            noc_req_i[i].tdest  <= noc_req_i[i].tdest + 1;
+            noc_req_i[i].tuser  <= i;
         end else if (noc_req_i[i].tvalid && noc_req_i[i].tready) begin
             noc_req_i[i].tvalid <= 0;//({$random}%2) && (i==0);
         end

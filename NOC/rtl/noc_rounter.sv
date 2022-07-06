@@ -80,7 +80,7 @@ for (genvar i = 0; i < DIM_N; i=i+1) begin:INPIPE
     logic           cy_equal;
     logic           cx_w;
     logic           cy_n;
-    assign {if_y,if_x} = noc_req_pipe_i[i].tuser[DY_W+DX_W-1:0];
+    assign {if_y,if_x} = noc_req_pipe_i[i].tdest[DY_W+DX_W-1:0];
     //P:0, E:1, W:2, N:3, S:4
     assign cx_equal = if_x == (DX_W)'(CUR_X);
     assign cy_equal = if_y == (DY_W)'(CUR_Y);
