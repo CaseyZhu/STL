@@ -1,1 +1,1 @@
-export RTL_DIR=~/code/STL
+export RTL_DIR=../../

@@ -1,0 +1,4 @@
+-f ../../Common/common.f 
+-f ../../Interface/interface.f 
+-f ../../NOC/noc.f 
+./tb.sv

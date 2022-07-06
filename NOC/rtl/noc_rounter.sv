@@ -87,10 +87,11 @@ for (genvar i = 0; i < DIM_N; i=i+1) begin:INPIPE
     assign cx_w     = if_x < (DX_W)'(CUR_X);
     assign cy_n     = if_y < (DY_W)'(CUR_Y);
     assign port_swb[i] = cx_equal && cy_equal ? ($clog2(DIM_N))'(0) :
-                         !cx_w                ? ($clog2(DIM_N))'(1) :
-                         cx_w                 ? ($clog2(DIM_N))'(2) :
                          cx_equal && cy_n     ? ($clog2(DIM_N))'(3) :
-                                                ($clog2(DIM_N))'(4) ;
+                         cx_equal && !cy_n    ? ($clog2(DIM_N))'(4) :
+                         cx_w                 ? ($clog2(DIM_N))'(2) :
+                         //!cx_w                ? ($clog2(DIM_N))'(1) :
+                                                ($clog2(DIM_N))'(1) ;
 
     assign swc_mreq_i[i]            = noc_req_pipe_i[i].tvalid;
     assign noc_req_pipe_i[i].tready = swc_mrdy_o[i];

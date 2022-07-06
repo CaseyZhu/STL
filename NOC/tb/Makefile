@@ -1,4 +1,10 @@
+#run:
+#	vsim -i  -do run.do
+#clean:
+#	rm -rf *.log work transcript vsim.wlf
+
 run:
-	vsim -i  -do run.do
+	./run.pl -c
+	./run.pl -r
 clean:
-	rm -rf *.log work transcript vsim.wlf
+	./run.pl -cl
