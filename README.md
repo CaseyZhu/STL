@@ -12,6 +12,7 @@ These primivtives include: fifo, arbiter, crc, ecc, useful Macro etc.
 * Common: is the ip write by myself include: sort, compare tree, 
  pipe-line control, swtichs, interface, useful Macro etc.
 
+* NOC is a lite weight 2D mesh network, use X-Y routing algorithm to avoid deadlock.
 
 # Basic Coding Guide
 
