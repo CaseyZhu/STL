@@ -595,4 +595,12 @@ body for explanations examples, and exceptions.
 * A combinational process should first define **default value** of all
   outputs in the process
 * Default value for next state variable should be the current state
-
+### Generate 
+* generate for/if
+  Naming the for loop of each nest explicitly. For example:
+  ```
+  for(genvar i;i<8;i++) begin:FOR_LOOP
+     sv code...
+  end:FOR_LOOP
+  ```
+* for loop in always_comb are discouraged
