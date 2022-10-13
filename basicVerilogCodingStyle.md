@@ -596,8 +596,7 @@ body for explanations examples, and exceptions.
   outputs in the process
 * Default value for next state variable should be the current state
 ### Generate 
-* generate for/if
-  Naming the for loop of each nest explicitly. For example:
+* generate for/if. Naming each nest explicitly. For example:
   ```
   for(genvar i;i<8;i++) begin:FOR_LOOP
      sv code...
