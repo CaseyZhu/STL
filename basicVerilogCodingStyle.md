@@ -127,10 +127,10 @@ Example with parameters:
 &#x1f44d;
 ```systemverilog {.good}
 module foo #(
-  parameter int unsigned Width = 8,
+  parameter  WIDTH = 8
 ) (
-  input                    clk_i,
-  input                    rst_ni,
+  input                    clk,
+  input                    rst_n,
   input [Width-1:0]        d_i,
   output logic [Width-1:0] q_o
 );
@@ -145,8 +145,8 @@ like this:
 
 ```systemverilog
 my_module i_my_instance (
-  .clk_i (clk_i),
-  .rst_ni(rst_ni),
+  .clk (clk),
+  .rst_n(rst_n),
   .d_i   (from_here),
   .q_o   (to_there)
 );
@@ -255,6 +255,47 @@ muxing.
 Do not infer a latch inside a function, as this may cause a simulation /
 synthesis mismatch.
 
+### Generate 
+* generate for/if. Naming each nest explicitly. For example:
+  ```
+  for(genvar i;i<8;i++) begin:FOR_LOOP
+     sv code...
+  end:FOR_LOOP
+  ```
+* for loop in always_comb are discouraged
+
+### Split Combinational and Sequential Logic
+&#x1f44d;
+```systemverilog {.good}
+assign c_d = a_q + b_q;
+always_ff@(posedge clk )
+   c_q <= c_d;
+```
+&#x1f44e;
+```systemverilog {.bad}
+always_ff@(posedge clk )
+   c_q <= a_q + b_q;
+```
+### No need reset on data
+When using data the control signal must be checked first.  
+
+&#x1f44d;
+```systemverilog {.good}
+assign c_d = a_q + b_q;
+always_ff@(posedge clk )
+   c_q <= c_d;
+```
+### Add update condition when necessary 
+In this sytle synthesis tool can add ICG automatically.   
+
+&#x1f44d;&#x1f44d;
+```systemverilog {.good}
+assign c_d = a_q + b_q;
+always_ff@(posedge clk )
+  if(hsk)
+    c_q <= c_d;
+```
+
 ## Design Conventions
 
 ### Summary
@@ -263,7 +304,7 @@ The key ideas in this section include:
 
 *   Declare all signals and use `logic`: `logic foo;`
 *   Packed arrays are little-endian: `logic [7:0] byte;`
-*   Unpacked arrays are big-endian: `byte_t arr[0:N-1];`
+*   Unpacked arrays are big-endian: `byte_t arr[0:N-1];` and this is discouraged
 *   Prefer to register module outputs.
 *   Declare FSMs consistently.
 
@@ -595,11 +636,4 @@ body for explanations examples, and exceptions.
 * A combinational process should first define **default value** of all
   outputs in the process
 * Default value for next state variable should be the current state
-### Generate 
-* generate for/if. Naming each nest explicitly. For example:
-  ```
-  for(genvar i;i<8;i++) begin:FOR_LOOP
-     sv code...
-  end:FOR_LOOP
-  ```
-* for loop in always_comb are discouraged
+
