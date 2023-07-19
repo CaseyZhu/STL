@@ -4,27 +4,31 @@ Use the .sv extension for SystemVerilog files (or .svh for files that are includ
 
 File extensions have the following meanings:
 
-.sv indicates a SystemVerilog file defining a module or package.
-.svh indicates a SystemVerilog header file intended to be included in another file using a preprocessor `include directive.
-.v indicates a Verilog-2001 file defining a module or package.
-.vh indicates a Verilog-2001 header file.
-Only .sv and .v files are intended to be compilation units. .svh and .vh files may only be `include-ed into other files.
+.sv indicates a SystemVerilog file defining a module or package.  
 
-With exceptions of netlist files, each .sv or .v file should contain only one module, and the name should be associated. For instance, file foo.sv should contain only the module foo.
+.svh indicates a SystemVerilog header file intended to be included in another file using a preprocessor `include directive.  
+
+.v indicates a Verilog-2001 file defining a module or package.  
+
+.vh indicates a Verilog-2001 header file.  
+
+Only .sv and .v files are intended to be compilation units. .svh and .vh files may only be `include-ed into other files.  
+
+
+With exceptions of netlist files, each .sv or .v file should contain only one module, and the name should be associated. For instance, file foo.sv should contain only the module foo.  
 
 ## Naming
-
-### Summary
 
 | Construct                            | Style                   |
 | ------------------------------------ | ----------------------- |
 | Declarations (module, class, package, interface) | `lower_snake_case` |
-| Instance names                       | `lower_snake_case`      |
+| Instance names                       | `i_lower_snake_case or u_lower_snake_case`      |
 | Signals (nets and ports)             | `lower_snake_case`      |
-| Variables, functions, tasks          | `lower_snake_case`      |
-| Named code blocks                    | `lower_snake_case`      |
+| Variables                            | `lower_snake_case`      |
+| Functions, tasks                     | `UpperCamelCase`      |
+| Named code blocks                    | `ALL_CAPS`      |
 | \`define macros                      | `ALL_CAPS`              |
-| Tunable parameters for parameterized modules, classes, and interfaces | `UpperCamelCase` |
+| Tunable parameters for parameterized modules, classes, and interfaces | `ALL_CAPS` |
 | Constants                            | `ALL_CAPS` or `UpperCamelCase` |
 | Enumeration types                    | `lower_snake_case_e`    |
 | Other typedef types                  | `lower_snake_case_t`    |
@@ -45,6 +49,7 @@ table lists the suffixes that have special meaning.
 | `_q2`,`_q3`, etc  | signal name | Pipelined versions of signals; `_q` is one cycle of latency, `_q2` is two cycles, `_q3` is three, etc |
 | `_i`, `_o`, `_io` | signal name | Module inputs, outputs, and bidirectionals |
 | `_hsk`,`_rden`,`_wren`| signal name | hand shake, read/write enable  |
+
 When multiple suffixes are necessary use the following guidelines:
 
 * Guidance suffixes are added together and not separated by additional `_`
@@ -78,20 +83,7 @@ cell registers.
 The default name is `rst_n`. If they must be distinguished by their clock, the
 clock name should be included in the reset name like `rst_domain_n`.
 
-***data can use none-rest Dffs to save power. 
-The control register signal is better to use Macro, this is easy to shift between FPGA and ASIC***  
 
-For example:  
-    \`define ALWAYS_CLK(clk, rst_n) always@(posedge clk or negedge rst_n)   declare  this macro in a common file. We can change the aynchronous reset block to synchronous  reset by redefine the macro to   \`define ALWAYS_CLK(clk, rst_n) always@(posedge clk)
-
-    ```systemverilog
-    `ALWAYS_CLK(clk, rst_n)
-    if (!rst_n) begin
-        q <= 1'b0;
-    end else begin
-        q <= d;
-    end
-    ```
 ## Language Features
 
 ### Preferred SystemVerilog Constructs
@@ -249,7 +241,7 @@ Where a case statement is needed, enclose it in its own `always_comb` block.
 
 Synthesizable combinational logic blocks should only use blocking assignments.
 
-Do not use three-state logic (`Z` state) to accomplish on-chip logic such as
+Do not use three-state logic (`Z or X` state) to accomplish on-chip logic such as
 muxing.
 
 Do not infer a latch inside a function, as this may cause a simulation /
@@ -268,13 +260,15 @@ synthesis mismatch.
 &#x1f44d;
 ```systemverilog {.good}
 assign c_d = a_q + b_q;
-always_ff@(posedge clk )
+always_ff@(posedge clk ) begin
    c_q <= c_d;
+end
 ```
 &#x1f44e;
 ```systemverilog {.bad}
-always_ff@(posedge clk )
+always_ff@(posedge clk ) begin
    c_q <= a_q + b_q;
+end
 ```
 ### No need reset on data
 When using data the control signal must be checked first.  
@@ -282,31 +276,61 @@ When using data the control signal must be checked first.
 &#x1f44d;
 ```systemverilog {.good}
 assign c_d = a_q + b_q;
-always_ff@(posedge clk )
+always_ff@(posedge clk ) begin
    c_q <= c_d;
+end
 ```
-### Add update condition when necessary 
+### Adding update conditions is prefered  
 In this sytle synthesis tool can add ICG automatically.   
 
 &#x1f44d;&#x1f44d;
 ```systemverilog {.good}
 assign c_d = a_q + b_q;
-always_ff@(posedge clk )
+always_ff@(posedge clk) begin
   if(hsk)
     c_q <= c_d;
+end
 ```
 
-## Design Conventions
+### Use Macro 
+***The repeat logic can be simplified by using Macro***  
 
-### Summary
+***The reset block is better to use Macro, this is easy to shift between FPGA and ASIC***  
 
-The key ideas in this section include:
+For example:  
+    \`define ALWAYS_CLK(clk, rst_n) always@(posedge clk or negedge rst_n)   declare  this macro in a common file. We can change the aynchronous reset block to synchronous  reset by redefine the macro to   \`define ALWAYS_CLK(clk, rst_n) always@(posedge clk)
 
-*   Declare all signals and use `logic`: `logic foo;`
-*   Packed arrays are little-endian: `logic [7:0] byte;`
-*   Unpacked arrays are big-endian: `byte_t arr[0:N-1];` and this is discouraged
-*   Prefer to register module outputs.
-*   Declare FSMs consistently.
+    ```systemverilog
+    `ALWAYS_CLK(clk, rst_n)
+    if (!rst_n) begin
+        q <= 1'b0;
+    end else begin
+        q <= d;
+    end
+    ```
+### `packed array` is prefered
+
+*   Packed arrays are little-endian: `logic [7:0] byte;`  
+*   Unpacked arrays are big-endian: `byte_t arr[0:N-1];` And this is discouraged
+  
+***Bit vectors and packed arrays must be little-endian.***
+
+When declaring bit vectors and packed arrays, the index of the most-significant
+bound (left of the colon) must be greater than or equal to the least-significant
+bound (right of the colon).
+
+This style of bit vector declaration keeps packed variables little-endian.
+
+For example:
+
+```systemverilog
+typedef logic [7:0] u8_t;
+logic [31:0] u32_word;
+u8_t [1:0] u16_word;
+u8_t byte3, byte2, byte1, byte0;
+assign u16_word = {byte1, byte0};
+assign u32_word = {byte3, byte2, u16_word};
+```
 
 ### Declare all signals
 
@@ -338,7 +362,21 @@ typedef logic [7:0] byte_t;
 bit signed [63:0] stars_in_the_sky;  // 2-state logic doesn't belong in RTL
 int grains_of_sand;  // Or wait, did I mean integer?  Easy to confuse!
 ```
+### Unique Case
+Unique case ensure there is no overlapping case items hence can evaluated in parrall， that is there is no priority between the items.  All software tools, including simulators,  will generate a warning any time the case statement is executed and the case expression matches multiple case items. It can save power and area. The defalut item is always need.
 
+&#x1f44d;
+```systemverilog {.good}
+unique case (state_q)
+  StIdle: state_d = StA;
+  StA: state_d = StB;
+  StB: begin
+    state_d = StIdle;
+    foo = bar;
+  end
+  default: state_d = StIdle;
+endcase
+```
 ### Logical vs. Bitwise
 
 ***Prefer logical constructs for logical comparisons, bit-wise for data.***
@@ -350,26 +388,6 @@ if clauses and ternary assignments.  Prefer bit-wise operators (`~`, `|`,
 where it is clear that the evaluated expression is to be used in a logical
 context.
 
-### Packed Ordering
-
-***Bit vectors and packed arrays must be little-endian.***
-
-When declaring bit vectors and packed arrays, the index of the most-significant
-bound (left of the colon) must be greater than or equal to the least-significant
-bound (right of the colon).
-
-This style of bit vector declaration keeps packed variables little-endian.
-
-For example:
-
-```systemverilog
-typedef logic [7:0] u8_t;
-logic [31:0] u32_word;
-u8_t [1:0] u16_word;
-u8_t byte3, byte2, byte1, byte0;
-assign u16_word = {byte1, byte0};
-assign u32_word = {byte3, byte2, u16_word};
-```
 
 ### Finite State Machines
 
@@ -470,19 +488,6 @@ always_ff @(posedge clk or negedge rst_n) begin
 end
 ```
 
-### Active-Low Signals
-
-***The `_n` suffix indicates an active-low signal.***
-
-If active-low signals are used, they must have the `_n` suffix in their
-name. Otherwise, all signals are assumed to be active-high.
-
-### Differential Pairs
-
-***Use the `_p` and `_n` suffixes to indicate a differential pair.***
-
-For example, `in_p` and `in_n` comprise a differential pair set.
-
 ### Delays
 
 ***Signals delayed by a single clock cycle should end in a `_q` suffix.***
@@ -554,7 +559,7 @@ macros can be used:
 `ASSERT_KNOWN(<name>, <signal>, <clk>, <reset condition>)
 ```
 
-## Appendix - Condensed Style Guide
+## Summary
 
 This is a short summary of the Comportable style guide. Refer to the main text
 body for explanations examples, and exceptions.
@@ -580,7 +585,8 @@ body for explanations examples, and exceptions.
 
 * Use **lower\_snake\_case** for instance names, signals, declarations,
   variables, types
-* Use **UpperCamelCase** for tunable parameters, enumerated value names
+* Use **ALL\_CAPS** for tunable parameters
+* Use **UpperCamelCase**  enumerated value names
 * Use **ALL\_CAPS** for constants and define macros
 * Main clock signal is named `clk`. All clock signals must start with `clk_`
 * Reset signals are **active-low** and **asynchronous**, default name is
